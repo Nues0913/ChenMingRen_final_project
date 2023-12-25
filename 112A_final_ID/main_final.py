@@ -11,7 +11,7 @@ if __name__ == "__main__":
     opt = parser.parse_args()
 
     # print(f"year : {opt.year} {opt.dir}")
-
+    
     # solution1(
     # dataPath=???,
     # constPath=???,
