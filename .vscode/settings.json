@@ -1,5 +1,6 @@
 {
     "files.autoGuessEncoding": true,
     "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.autoImportCompletions": true
+    "python.analysis.autoImportCompletions": true,
+    "files.encoding": "utf8"
 }

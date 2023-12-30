@@ -12,6 +12,7 @@ if __name__ == "__main__":
 
     # print(f"year : {opt.year} {opt.dir}")
     
+    # write a program that calculates the advanced batting statistics
     # solution1(
     # dataPath=???,
     # constPath=???,
