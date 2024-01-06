@@ -16,7 +16,7 @@ if __name__ == "__main__":
     constPath="data/wOBA_FIP_constants.csv",
     year="2023",
     minPA=0,
-    team="LAA", # disabled this for no specified team
+    # team="LAA", # disabled this for no specified team
     saveFig=False # create a 'fig' folder in the same directory as the python file, or change the save location of savefig() in each moudle for the images
     )
     solution2(

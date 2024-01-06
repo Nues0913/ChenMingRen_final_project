@@ -15,14 +15,14 @@ class Team:
         self.players = {}
         if(team != "none"):
             for i in list(DataFrame.loc[ (DataFrame["Tm"] == team) & (DataFrame["IP"] >= minIP)]["Name"]): # type: ignore
-                self.players[i] = self.PlayerBattingData(DataFrame,constData,i,year,team)
+                self.players[i] = self.PlayerPitchingData(DataFrame,constData,i,year,team)
         else:
             for i in list(DataFrame.loc[(DataFrame["IP"] >= minIP)]["Name"]): # type: ignore
-                self.players[i] = self.PlayerBattingData(DataFrame,constData,i,year,team)
+                self.players[i] = self.PlayerPitchingData(DataFrame,constData,i,year,team)
         self.LG_AVG_ERA_PLUS = self.players[list(self.players.keys())[0]].LG_AVG_ERA_PLUS
         self.LG_AVG_FIP = self.players[list(self.players.keys())[0]].LG_AVG_FIP
         
-    class PlayerBattingData:
+    class PlayerPitchingData:
         def __init__(self, DataFrame : pd.DataFrame, constData : pd.DataFrame, name : str, year : str, team : str="none"):
             self.name = name
             table = DataFrame.loc[ DataFrame["Name"] == name]  # type: ignore
@@ -47,7 +47,7 @@ class Team:
         data.sort()
         return data
     
-    def getPlayerInfo(self,playerName : str) -> PlayerBattingData: # type: ignore
+    def getPlayerInfo(self,playerName : str) -> PlayerPitchingData: # type: ignore
         return self.players[playerName]
 
 def solution2(dataPath : str,constPath : str, year : str, minIP : float, team : str="none", saveFig : bool =False):
@@ -128,10 +128,6 @@ def solution2(dataPath : str,constPath : str, year : str, minIP : float, team : 
         #     print(f"name : {data[i].name}  team : {data[i].team}  ERA_PLUS : {data[i].ERA_PLUS}")
         newdata = data[0:5]
         newdata.extend(random.sample(data[5:len(data)],k = 15))
-
-        # for i in data:
-        #     if (i.name == "Tony\u00A0Gonsolin" or i.name == "Julio\u00A0Urías*" or i.name == "Dylan\u00A0Cease" or i.name == "Alek\u00A0Manoah" or i.name == "Justin\u00A0Verlander"):
-        #         print(f"name : {i.name}  team : {i.team}  ERA_PLUS : {i.ERA_PLUS}  IP : {i.IP}")
 
         #draw figure
         fig2 = plt.figure(2, figsize=(12,4), dpi=100, facecolor="w")
