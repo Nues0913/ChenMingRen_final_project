@@ -81,22 +81,21 @@ def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : st
 
         # initial data
         theTeam = Team(dataPath,constPath,year,team,minPA)
-        print(theTeam.team)
-        print(theTeam.year)
         data = []
         playersName = theTeam.getPlayersName()
         AVG_OPS_PLUS = theTeam.LG_AVG_OPS_PLUS
         LG_AVG_wRC = theTeam.LG_AVG_wRC
-        print(f"AVG_OPS_PLUS : {AVG_OPS_PLUS}")
-        print(f"LG_AVG_wRC : {LG_AVG_wRC}")
         for i in playersName:
             data.append(theTeam.getPlayerInfo(i))
 
-        # choose top 14 players by wRC
+        # choose top 14 players or less by wRC
+        data = list(filter(lambda x: x.wRC != "invalid", data))
         data.sort(key=lambda x: x.wRC,reverse=True)
-        # for i in range(14):
-        #     print(f"name : {data[i].name}  team : {data[i].team}  wRC : {data[i].wRC}")
-        data = data[0:14]
+        # for i in range(len(data)):
+        #     print(f"{data[i].name}  ERA+ : {data[i].ERA_PLUS}  IP : {data[i].IP}")
+        if(len(data) >= 14):
+            data = data[0:14]
+        else: data = data[0:len(data)]
 
         # draw figure
         fig2 = plt.figure(2, figsize=(12,4), dpi=100, facecolor="w")
@@ -112,9 +111,9 @@ def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : st
         )
         data2, = par.plot(
             range(len(data)), 
-            np.ones((len(data),))*data[0].LG_AVG_wRC, 
+            np.ones((len(data),))*LG_AVG_wRC, 
             'b--', 
-            label="Average wRC = {:.03f}".format(data[0].LG_AVG_wRC),
+            label="Average wRC = {:.03f}".format(LG_AVG_wRC),
         )
         host.set_ylabel(r"OPS$^+$", color='r')
         host.set_xticks(range(len(data)))
@@ -128,7 +127,8 @@ def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : st
         par.set_ylabel("wRC", color='b')
         par.tick_params(axis='y', labelcolor='b')
         fig2.suptitle(r"OPS$^+$ & wRC of Team {0}, Season {1}".format(team,year))
-        fig2.savefig(f"fig/OPS+ & wRC of Team {team}, Season {year}", bbox_inches='tight', facecolor='white')
+        if saveFig == True:
+            fig2.savefig(f"fig/OPS+ & wRC of Team {team}, Season {year}", bbox_inches='tight', facecolor='white')
         plt.show()
 
     # no specified team
@@ -167,9 +167,9 @@ def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : st
         )
         data2, = par.plot(
             range(len(newdata)), 
-            np.ones((len(newdata),))*newdata[0].LG_AVG_wRC, 
+            np.ones((len(newdata),))*LG_AVG_wRC, 
             'b--', 
-            label="Average wRC = {:.03f}".format(newdata[0].LG_AVG_wRC),
+            label="Average wRC = {:.03f}".format(LG_AVG_wRC),
         )
         host.set_ylabel(r"OPS$^+$", color='r')
         host.set_xticks(range(len(newdata)))
@@ -183,7 +183,8 @@ def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : st
         par.set_ylabel("wRC", color='b')
         par.tick_params(axis='y', labelcolor='b')
         fig2.suptitle(r"OPS$^+$ & wRC of players, Season {0}".format(year))
-        fig2.savefig(f"fig/OPS+ & wRC of players, Season {year}", bbox_inches='tight', facecolor='white')
+        if saveFig == True:
+            fig2.savefig(f"fig/OPS+ & wRC of players, Season {year}", bbox_inches='tight', facecolor='white')
         plt.show()
 
 # for testing
@@ -193,6 +194,6 @@ if __name__ == "__main__":
     constPath="data/wOBA_FIP_constants.csv",
     year="2023",
     minPA=0,
-    # team="LAA",
+    team="LAA",
     saveFig=False
     )
