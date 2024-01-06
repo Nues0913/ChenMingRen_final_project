@@ -32,3 +32,5 @@ requiredData = ["Shohei\xa0Ohtani*", "Brandon\xa0Drury", "Mickey\xa0Moniak*", "L
 
 for i in requiredData:
     print(batting2023.loc[batting2023["Name"] == i])
+
+print(batting2023.iloc[-1])

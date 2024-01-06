@@ -1,24 +1,34 @@
 import pandas as pd
+from mpl_toolkits.axes_grid1 import host_subplot
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import random
 
 class Team:
     
-    def __init__(self, dataPath : str, constPath : str, team : str, year : str, minPA : int= 0):
+    def __init__(self, dataPath : str, constPath : str, year : str, team : str="none", minPA : int= 0):
         self.year = year
         self.team = team
         DataFrame = pd.read_excel(dataPath,sheet_name=year)
         constData = pd.read_csv(constPath)
         self.players = {}
-        for i in list(DataFrame.loc[ (DataFrame["Tm"] == team) & (DataFrame["PA"] >= minPA)]["Name"]): # type: ignore
-            self.players[i] = self.PlayerBattingData(DataFrame,constData,i,team,year)
+        if(team != "none"):
+            for i in list(DataFrame.loc[ (DataFrame["Tm"] == team) & (DataFrame["PA"] >= minPA)]["Name"]): # type: ignore
+                self.players[i] = self.PlayerBattingData(DataFrame,constData,i,year,team)
+        else:
+            for i in list(DataFrame.loc[(DataFrame["PA"] >= minPA)]["Name"]): # type: ignore
+                self.players[i] = self.PlayerBattingData(DataFrame,constData,i,year,team)
         self.LG_AVG_OPS_PLUS = self.players[list(self.players.keys())[0]].LG_AVG_OPS_PLUS
         self.LG_AVG_wRC = self.players[list(self.players.keys())[0]].LG_AVG_wRC
-
         
     class PlayerBattingData:
-        def __init__(self, DataFrame : pd.DataFrame, constData : pd.DataFrame, name : str, team : str, year : str):
+        def __init__(self, DataFrame : pd.DataFrame, constData : pd.DataFrame, name : str, year : str, team : str="none"):
             self.name = name
+            table = DataFrame.loc[ DataFrame["Name"] == name]  # type: ignore
             lg_table = DataFrame.iloc[-1] # type: ignore
             const_table = constData.loc[constData["Season"] == int(year)]
+            self.team = table["Tm"].values[0]
             LG_SLG = (lg_table["H"] +
                     1*lg_table["2B"] +
                     2*lg_table["3B"] +
@@ -29,7 +39,6 @@ class Team:
             LG_wOBA = const_table["wOBA"].values[0]
             LG_wOBAScale = const_table["wOBAScale"].values[0]
             LG_R_PA = const_table["R/PA"].values[0]
-            table = DataFrame.loc[ DataFrame["Name"] == name]  # type: ignore
             self.__AB : int = table["AB"].values[0]
             self.__BB : int = table["BB"].values[0]
             self.__TWO_B : int = table["2B"].values[0]
@@ -51,8 +60,8 @@ class Team:
                 0.883*(self.__H - self.__TWO_B - self.__THREE_B - self.__HR) +
                 1.244*(self.__TWO_B) +
                 1.569*(self.__THREE_B) +
-                2.004*(self.__HR)) / (self.__AB + self.__BB + self.__SF + self.__HBP - self.__IBB)
-            self.wRC = (((self.wOBA - LG_wOBA) / LG_wOBAScale) + LG_R_PA) * self.__PA
+                2.004*(self.__HR)) / (self.__AB + self.__BB + self.__SF + self.__HBP - self.__IBB) if(self.__AB + self.__BB + self.__SF + self.__HBP - self.__IBB) else "invalid"
+            self.wRC = (((self.wOBA - LG_wOBA) / LG_wOBAScale) + LG_R_PA) * self.__PA if(self.wOBA != "invalid") else "invalid"
             self.LG_AVG_OPS_PLUS = 100*((LG_OBP/LG_OBP) + (LG_SLG/LG_SLG) - 1)
             self.LG_AVG_wRC = ((LG_wOBA - LG_wOBA) / LG_wOBAScale + LG_R_PA) * lg_table["PA"]
 
@@ -65,32 +74,125 @@ class Team:
         return self.players[playerName]
 
 
-def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : str, saveFig : bool =False):
-    LAA = Team(dataPath,constPath,team,year,minPA)
-    requiredData = ["Shohei\xa0Ohtani*", "Brandon\xa0Drury", "Mickey\xa0Moniak*", "Luis\xa0Rengifo#", 
-                    "Mike\xa0Trout", "Taylor\xa0Ward", "Zach\xa0Neto", "Gio\xa0Urshela", 
-                    "Logan\xa0O'Hoppe", "Matt\xa0Thaiss*", "Chad\xa0Wallach", "Nolan\xa0Schanuel*", 
-                    "Anthony\xa0Rendon", "Jared\xa0Walsh*"]
-    print(LAA.team)
-    print(LAA.year)
-    data = []
-    playersName = LAA.getPlayersName()
-    AVG_OPS_PLUS = LAA.LG_AVG_OPS_PLUS
-    LG_AVG_wRC = LAA.LG_AVG_wRC
-    print(f"AVG_OPS_PLUS : {AVG_OPS_PLUS}")
-    print(f"LG_AVG_wRC : {LG_AVG_wRC}")
-    for i in requiredData:
-        # print("{0} OPS+ : {1:0.0f}".format(i,LAA.getPlayerInfo(i).OPS_PLUS))
-        print("{0} wRC : {1:0.3f}".format(i,LAA.getPlayerInfo(i).wRC))
+def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : str="none", saveFig : bool =False):
+    
+    # specified team
+    if(team != "none"):
 
+        # initial data
+        theTeam = Team(dataPath,constPath,year,team,minPA)
+        print(theTeam.team)
+        print(theTeam.year)
+        data = []
+        playersName = theTeam.getPlayersName()
+        AVG_OPS_PLUS = theTeam.LG_AVG_OPS_PLUS
+        LG_AVG_wRC = theTeam.LG_AVG_wRC
+        print(f"AVG_OPS_PLUS : {AVG_OPS_PLUS}")
+        print(f"LG_AVG_wRC : {LG_AVG_wRC}")
+        for i in playersName:
+            data.append(theTeam.getPlayerInfo(i))
 
+        # choose top 14 players by wRC
+        data.sort(key=lambda x: x.wRC,reverse=True)
+        # for i in range(14):
+        #     print(f"name : {data[i].name}  team : {data[i].team}  wRC : {data[i].wRC}")
+        data = data[0:14]
 
+        # draw figure
+        fig2 = plt.figure(2, figsize=(12,4), dpi=100, facecolor="w")
+        host = host_subplot(111)
+        par = host.twinx()
+        host.scatter(range(len(data)), list(map(lambda x: x.OPS_PLUS, data)), c="r")
+        par.scatter(range(len(data)), list(map(lambda x: x.wRC, data)), c="b")
+        data1, = host.plot(
+            range(len(data)), 
+            np.ones((len(data),))*100, 
+            'r--', 
+            label=r"League average OPS$^+$",    # LaTeX syntax
+        )
+        data2, = par.plot(
+            range(len(data)), 
+            np.ones((len(data),))*data[0].LG_AVG_wRC, 
+            'b--', 
+            label="Average wRC = {:.03f}".format(data[0].LG_AVG_wRC),
+        )
+        host.set_ylabel(r"OPS$^+$", color='r')
+        host.set_xticks(range(len(data)))
+        host.set_xticklabels(list(map(lambda x: x.name, data)), fontsize=8)
+        for label in host.get_xticklabels():
+            label.set_rotation(40)
+            label.set_horizontalalignment('center')
+        host.tick_params(axis='x', which='both', direction='inout')
+        host.tick_params(axis='y', labelcolor='r')
+        host.legend(labelcolor="linecolor")
+        par.set_ylabel("wRC", color='b')
+        par.tick_params(axis='y', labelcolor='b')
+        fig2.suptitle(r"OPS$^+$ & wRC of Team {0}, Season {1}".format(team,year))
+        fig2.savefig(f"fig/OPS+ & wRC of Team {team}, Season {year}", bbox_inches='tight', facecolor='white')
+        plt.show()
+
+    # no specified team
+    else:
+
+        # initial data
+        AllTeam = Team(dataPath,constPath,year,team,minPA)
+        data = []
+        data_with_invalid = []
+        playersName = AllTeam.getPlayersName()
+        AVG_OPS_PLUS = AllTeam.LG_AVG_OPS_PLUS
+        LG_AVG_wRC = AllTeam.LG_AVG_wRC
+
+        # choose top 5 players by wRC and 15 random players
+        for i in playersName:
+            data.append(AllTeam.getPlayerInfo(i))
+        data_with_invalid = list(filter(lambda x: x.wRC == "invalid", data))
+        data = list(filter(lambda x: x.wRC != "invalid", data))
+        data.sort(key=lambda x: x.wRC,reverse=True)
+        # for i in range(5):
+        #     print(f"name : {data[i].name}  team : {data[i].team}  wRC : {data[i].wRC}")
+        newdata = data[0:5]
+        newdata.extend(random.sample(data[5:len(data)],k = 15))
+
+        #draw figure
+        fig2 = plt.figure(2, figsize=(12,4), dpi=100, facecolor="w")
+        host = host_subplot(111)
+        par = host.twinx()
+        host.scatter(range(len(newdata)), list(map(lambda x: x.OPS_PLUS, newdata)), c="r")
+        par.scatter(range(len(newdata)), list(map(lambda x: x.wRC, newdata)), c="b")
+        data1, = host.plot(
+            range(len(newdata)), 
+            np.ones((len(newdata),))*100, 
+            'r--', 
+            label=r"League average OPS$^+$",    # LaTeX syntax
+        )
+        data2, = par.plot(
+            range(len(newdata)), 
+            np.ones((len(newdata),))*newdata[0].LG_AVG_wRC, 
+            'b--', 
+            label="Average wRC = {:.03f}".format(newdata[0].LG_AVG_wRC),
+        )
+        host.set_ylabel(r"OPS$^+$", color='r')
+        host.set_xticks(range(len(newdata)))
+        host.set_xticklabels(list(map(lambda x: x.name, newdata)), fontsize=8)
+        for label in host.get_xticklabels():
+            label.set_rotation(40)
+            label.set_horizontalalignment('center')
+        host.tick_params(axis='x', which='both', direction='inout')
+        host.tick_params(axis='y', labelcolor='r')
+        host.legend(labelcolor="linecolor")
+        par.set_ylabel("wRC", color='b')
+        par.tick_params(axis='y', labelcolor='b')
+        fig2.suptitle(r"OPS$^+$ & wRC of players, Season {0}".format(year))
+        fig2.savefig(f"fig/OPS+ & wRC of players, Season {year}", bbox_inches='tight', facecolor='white')
+        plt.show()
+
+# for testing
 if __name__ == "__main__":
     solution1(
     dataPath="data/data_batting_2021-2023.xlsx",
     constPath="data/wOBA_FIP_constants.csv",
     year="2023",
     minPA=0,
-    team="LAA",
+    # team="LAA",
     saveFig=False
     )
