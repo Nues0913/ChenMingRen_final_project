@@ -2,17 +2,18 @@ import pandas as pd
 
 class Team:
     
-    def __init__(self,team,year,dataPath):
+    def __init__(self, dataPath : str, team : str, year : str, minPA : int= 0):
         self.year = year
         self.team = team
-        __DataFrame = pd.read_excel(dataPath,sheet_name=year)
-        self.players = list(__DataFrame.loc[ __DataFrame["Tm"] == team]["Name"])  # type: ignore
-        for i in range(len(self.players)):
-            self.players[i] = self.PlayerBattingData(dataPath,self.players[i],team,year)
+        DataFrame = pd.read_excel(dataPath,sheet_name=year)
+        self.players = {}
+        for i in list(DataFrame.loc[ (DataFrame["Tm"] == team) & (DataFrame["PA"] >= minPA)]["Name"]): # type: ignore
+            self.players[i] = self.PlayerBattingData(dataPath,i,team,year)
+        self.LG_AVG_OPS_PLUS = self.players[list(self.players.keys())[0]].LG_AVG_OPS_PLUS
 
         
     class PlayerBattingData:
-        def __init__(self,dataPath,name,team,year):
+        def __init__(self, dataPath : str, name : str, team : str, year : str):
             self.name = name
             DataFrame = pd.read_excel(dataPath,sheet_name=year)
             lg_table = DataFrame.iloc[-1] # type: ignore
@@ -37,23 +38,19 @@ class Team:
             self.__SLG = self.__TB/self.__AB if(self.__AB) else -1
             self.OPS = self.__OBP + self.__SLG if (self.__AB) else "invalid"
             self.OPS_PLUS = 100*((self.__OBP/LG_OBP) + (self.__SLG/LG_SLG) - 1)
+            self.LG_AVG_OPS_PLUS = 100*((LG_OBP/LG_OBP) + (LG_SLG/LG_SLG) - 1)
 
-    def getPlayersName(self) -> list:
-        data = []
-        for i in range(len(self.players)):
-            data.append(self.players[i].name)
+    def getPlayersName(self) -> list[ str ]:
+        data = list(self.players.keys())
         data.sort()
         return data
     
     def getPlayerInfo(self,playerName : str) -> PlayerBattingData: # type: ignore
-        for i in range(len(self.players)):
-            if(self.players[i].name == playerName): return self.players[i]
-
-        
+        return self.players[playerName]
 
 
-def solution1(dataPath,constPath,year,minPA,team,saveFig=False):
-    LAA = Team(team,year,dataPath)
+def solution1(dataPath : str,constPath : str, year : str, minPA : int, team : str, saveFig : bool =False):
+    LAA = Team(dataPath,team,year,minPA)
     requiredData = ["Shohei\xa0Ohtani*", "Brandon\xa0Drury", "Mickey\xa0Moniak*", "Luis\xa0Rengifo#", 
                     "Mike\xa0Trout", "Taylor\xa0Ward", "Zach\xa0Neto", "Gio\xa0Urshela", 
                     "Logan\xa0O'Hoppe", "Matt\xa0Thaiss*", "Chad\xa0Wallach", "Nolan\xa0Schanuel*", 
@@ -62,30 +59,11 @@ def solution1(dataPath,constPath,year,minPA,team,saveFig=False):
     print(LAA.year)
     data = []
     playersName = LAA.getPlayersName()
-    AVG_OPS_PLUS = 0
-    for i in range(len(requiredData)):
-        data.append(LAA.getPlayerInfo(requiredData[i]))
-        print(data[i].OPS_PLUS)
-        AVG_OPS_PLUS += data[i].OPS_PLUS
-    AVG_OPS_PLUS /= len(requiredData)
+    AVG_OPS_PLUS = LAA.LG_AVG_OPS_PLUS
     print(f"AVG : {AVG_OPS_PLUS}")
-    # for i in range(len(LAA_players)):
-    #     if(LAA_players[i].name == "Luis\xa0Rengifo#"):
-    #         print(LAA_players[i].name)
-    #         print(LAA_players[i].team)
-    #         print(LAA_players[i].year)
-    #         print(LAA_players[i].OPS_PLUS)
-    #         break
+    for i in playersName:
+        print("{0} OPS+ : {1:0.0f}".format(i,LAA.getPlayerInfo(i).OPS_PLUS))
 
-
-
-# print(a.battingData["Name"])
-# print(" ".join(a.battingData.values.tolist()[20][0].split()))
-# print(a.index)
-# print(a.loc[a.Name == "José Abreu"].G.values)
-# print(a.battingData.loc[[,"PA"]])
-
-# print(a.battingData['',''])
 
 
 if __name__ == "__main__":

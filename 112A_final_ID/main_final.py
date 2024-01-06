@@ -13,14 +13,14 @@ if __name__ == "__main__":
     # print(f"year : {opt.year} {opt.dir}")
     
     # write a program that calculates the advanced batting statistics
-    # solution1(
-    # dataPath=???,
-    # constPath=???,
-    # year=???,
-    # minPA=???,
-    # team=???,
-    # saveFig=???,
-    # )
+    solution1(
+    dataPath="data/data_batting_2021-2023.xlsx",
+    constPath="data/wOBA_FIP_constants.csv",
+    year="2023",
+    minPA=0,
+    team="LAA",
+    saveFig=False
+    )
     # solution2(
     # dataPath=???,
     # constPath=???,
